@@ -192,7 +192,8 @@
 <body>
     <div class="container">
         <header></header>
-        <main>
+        <img class="klaar" src="gif/0.gif" alt="Goed gedaan!" style="display: none;">
+        <main class="bezig" style="display: flex">
             <div class="getalbeeld"></div>
             <form class="splitsing">
                 <div class="grootste getal"></div>
@@ -234,6 +235,8 @@
         let prev = [];
 
         // Get HTML elements
+        const finishedContainerElement = document.querySelector('.klaar');
+        const gameContainerElement = document.querySelector('.bezig');
         const baseNumberElement = document.querySelector('.grootste.getal');
         const prefilledNumberElement = document.querySelector('.gegeven.getal');
         const numberBoxesElement = document.querySelector('.getalbeeld');
@@ -244,11 +247,42 @@
         const feedbackTextElement = document.querySelector('.feedback .tekst');
 
         // Create audio
-        const correctSound = new Audio('goed.mp3');
-        const incorrectSound = new Audio('fout.mp3');
+        const correctSound = new Audio('mp3/goed.mp3');
+        const incorrectSound = new Audio('mp3/fout.mp3');
+        const finishedSound = new Audio('mp3/klaar.mp3');
+
+        // Generate image array
+        const pictures = shuffle([...Array(10).keys()].map(i => `gif/${i}.gif`));
+
+        function generatePrompts() {
+            const newPrompts = [];
+            for (let i = 1; i <= maxBaseNumber; i++) {
+                for (let j = 0; j <= i; j++) {
+                    newPrompts.push([i, j]);
+                }
+            }
+            shuffle(newPrompts);
+            return newPrompts;
+        }
 
         function showNewCombination() {
-            [baseNumber, prefilledNumber] = prompts.shift();
+            try {
+                [baseNumber, prefilledNumber] = prompts.shift();
+            } catch (e) {
+                if (finishedSound.paused) finishedSound.play();
+                else finishedSound.currentTime = 0;
+                finishedContainerElement.src = pictures.shift();
+                pictures.push(finishedContainerElement.src);
+                feedbackElement.style.display = 'none';
+                finishedContainerElement.style.display = 'block';
+                gameContainerElement.style.display = 'none';
+                prompts = generatePrompts();
+                setTimeout(function () {
+                    finishedContainerElement.style.display = 'none';
+                    gameContainerElement.style.display = 'flex';
+                    showNewCombination();
+                }, 5000);
+            }
             baseNumberElement.innerText = baseNumber;
             prefilledNumberElement.innerText = prefilledNumber;
             createNumberBoxes(baseNumber);
@@ -308,14 +342,7 @@
         });
 
         // Generate prompts
-        const prompts = [];
-        for (let i = 1; i <= maxBaseNumber; i++) {
-            for (let j = 0; j <= i; j++) {
-                prompts.push([i, j]);
-            }
-        }
-
-        shuffle(prompts);
+        let prompts = generatePrompts();
         showNewCombination();
     </script>
 </body>
