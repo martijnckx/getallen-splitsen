@@ -271,8 +271,6 @@
             } catch (e) {
                 if (finishedSound.paused) finishedSound.play();
                 else finishedSound.currentTime = 0;
-                finishedContainerElement.src = pictures.shift();
-                pictures.push(finishedContainerElement.src);
                 feedbackElement.style.display = 'none';
                 finishedContainerElement.style.display = 'block';
                 gameContainerElement.style.display = 'none';
@@ -280,6 +278,8 @@
                 setTimeout(function () {
                     finishedContainerElement.style.display = 'none';
                     gameContainerElement.style.display = 'flex';
+                    pictures.push(finishedContainerElement.src);
+                    finishedContainerElement.src = pictures.shift();
                     showNewCombination();
                 }, 5000);
             }
@@ -341,7 +341,8 @@
             guessedNumberElement.value = ''
         });
 
-        // Generate prompts
+        pictures.push(finishedContainerElement.src);
+        finishedContainerElement.src = pictures.shift();
         let prompts = generatePrompts();
         showNewCombination();
     </script>
