@@ -301,6 +301,7 @@
             }
             const correctAnswer = baseNumber - prefilledNumber;
             const guessIsCorrect = guess === correctAnswer;
+            if (!guessIsCorrect) prompts.push([baseNumber, prefilledNumber]);
             showFeedback(guessIsCorrect, correctAnswer);
             showNewCombination();
             guessedNumberElement.value = ''
