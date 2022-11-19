@@ -216,8 +216,14 @@
         </footer>
     </div>
     <script>
+        // Query params
+        const params = new Proxy(new URLSearchParams(window.location.search), {
+            get: (searchParams, prop) => searchParams.get(prop),
+        });
+        const desiredMaxBaseNumber = parseInt(params.tot);
+
         // Define base numbers
-        const maxBaseNumber = 5
+        const maxBaseNumber = (!isNaN(desiredMaxBaseNumber) && desiredMaxBaseNumber > 0 && desiredMaxBaseNumber < 20) ? desiredMaxBaseNumber : 5;
         const baseNumbers = Array.from({ length: maxBaseNumber }, (_, i) => i + 1);
         let baseNumber = 0;
         let prefilledNumber = 0;
