@@ -29,6 +29,36 @@
 
         }
 
+        header {
+            width: 100%;
+        }
+
+        .timer {
+            display: none;
+            width: 100%;
+            text-align: center;
+            font-family: sans-serif;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: red;
+            height: 50px;
+            line-height: 50px;
+            isolation: isolate;
+            position: relative;
+            --timer: 4s;
+            --progress: 100%;
+        }
+
+        .timer::before {
+            content: '';
+            position: absolute;
+            background: #ffffff80;
+            z-index: -1;
+            width: var(--progress);
+            inset: 0;
+            transition: width var(--timer) linear;
+        }
+
         main {
             display: flex;
             flex-direction: column;
@@ -191,7 +221,9 @@
 
 <body>
     <div class="container">
-        <header></header>
+        <header>
+            <div class="timer">Je hebt nog <span class="seconden">8</span> seconden.</div>
+        </header>
         <img class="klaar" src="gif/0.gif" alt="Goed gedaan!" style="display: none;">
         <main class="bezig" style="display: flex">
             <div class="getalbeeld"></div>
@@ -222,6 +254,7 @@
             get: (searchParams, prop) => searchParams.get(prop),
         });
         const desiredMaxBaseNumber = parseInt(params.tot);
+        const desiredTimerSeconds = parseInt(params.timer);
 
         // Define constants
         const BASE = 0;
@@ -233,6 +266,8 @@
         let baseNumber = 0;
         let prefilledNumber = 0;
         let prev = [];
+        let timerSeconds = (!isNaN(desiredTimerSeconds) && desiredTimerSeconds > 0 && desiredTimerSeconds < 60) ? desiredTimerSeconds : -1;
+        let timerStarted = undefined;
 
         // Get HTML elements
         const finishedContainerElement = document.querySelector('.klaar');
@@ -245,6 +280,8 @@
         const feedbackElement = document.querySelector('.feedback');
         const feedbackThumbElement = document.querySelector('.feedback .duim');
         const feedbackTextElement = document.querySelector('.feedback .tekst');
+        const timerElement = document.querySelector('.timer');
+        const secondsLeftElement = document.querySelector('.seconden');
 
         // Create audio
         const correctSound = new Audio('mp3/goed.mp3');
@@ -272,6 +309,7 @@
                 if (finishedSound.paused) finishedSound.play();
                 else finishedSound.currentTime = 0;
                 feedbackElement.style.display = 'none';
+                timerElement.style.display = 'none';
                 finishedContainerElement.style.display = 'block';
                 gameContainerElement.style.display = 'none';
                 prompts = generatePrompts();
@@ -282,6 +320,16 @@
                     finishedContainerElement.src = pictures.shift();
                     showNewCombination();
                 }, 5000);
+            }
+            if (timerElement.style.display && timerElement.style.display !== 'none') {
+                timerStarted = new Date();
+                secondsLeftElement.innerText = timerSeconds - (Math.round(Math.abs(timerStarted - (new Date())) / 1000));
+                timerElement.style.setProperty('--timer', '0s');
+                timerElement.style.setProperty('--progress', '100%');
+                setTimeout(function () {
+                    timerElement.style.setProperty('--timer', `${timerSeconds}s`);
+                    timerElement.style.setProperty('--progress', '0%');
+                }, 10);
             }
             baseNumberElement.innerText = baseNumber;
             prefilledNumberElement.innerText = prefilledNumber;
@@ -326,20 +374,39 @@
             else sound.currentTime = 0;
         }
 
-        numberSplittingFormElement.addEventListener('submit', function (e) {
-            e.preventDefault();
+        function handleSubmit(e) {
+            e?.preventDefault();
             const guess = parseInt(guessedNumberElement.value);
             if (isNaN(guess) || guess < 0) {
                 guessedNumberElement.value = ''
                 return;
             }
+            gradeGuess(guess);
+        }
+
+        function gradeGuess(guess) {
+            if (timerSeconds > 0) timerElement.style.display = 'block';
             const correctAnswer = baseNumber - prefilledNumber;
             const guessIsCorrect = guess === correctAnswer;
             if (!guessIsCorrect) prompts.push([baseNumber, prefilledNumber]);
             showFeedback(guessIsCorrect, correctAnswer);
             showNewCombination();
             guessedNumberElement.value = ''
-        });
+        }
+
+        numberSplittingFormElement.addEventListener('submit', handleSubmit);
+
+        if (timerSeconds > 0) {
+            setInterval(function () {
+                if (timerElement.style.display && timerElement.style.display !== 'none') {
+                    const timeLeft = timerSeconds - (Math.abs(timerStarted - (new Date())) / 1000)
+                    secondsLeftElement.innerText = Math.round(timeLeft);
+                    if (timeLeft < 0) {
+                        gradeGuess(-1);
+                    }
+                }
+            }, 50);
+        }
 
         pictures.push(finishedContainerElement.src);
         finishedContainerElement.src = pictures.shift();
